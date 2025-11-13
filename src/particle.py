@@ -4,7 +4,8 @@ import numpy as np
 max_velocity = 4
 w = 0.7  # inertia weight
 c1 = 1.4 # cognitive coefficient
-c2 = 1.4 # social coefficient
+c2 = 1.4 # global coefficient
+c3 = 1.4 # social coefficient
 
 class Particle:
     def __init__(self, num_vars):
@@ -30,6 +31,24 @@ class Particle:
 
         self.velocity = inertia_term + personal_term + global_term
         self.velocity = np.clip(self.velocity, -max_velocity, max_velocity) ## holds velocity in between bounds to avoid over/under shooting
+
+    def update_velocity_with_informants(self, global_best_position, informant_best_position):
+        """ Update velocity with informants method:
+        new_velocity = w*v + c1(x@ - xti) + c2(x! - xti) + c3(x* - xti)
+        The velocity formula in english:
+        new velocity of the particle x =
+        random value "w" multiplied by current velocity "v" -> inertia term
+        plus random val "c1" multiplied by best particle position minus current particle position -> personal term
+        plus random value "c2" multiplied by global best position minus current particle position -> global term
+        plus random value "c3" multiplied by informant best position minuis current particle position -> social term
+        """
+        inertia_term = w * self.velocity
+        personal_term = c1 * (self.best_position - self.position)
+        global_term = c2 * (global_best_position - self.position)
+        social_term = c3 * (informant_best_position - self.position)
+
+        self.velocity = inertia_term + personal_term + social_term + global_term
+        self.velocity = np.clip(self.velocity, -max_velocity, max_velocity)  ## holds velocity in between bounds to avoid over/under shooting
 
     def update_position(self):
         """Update position method:
