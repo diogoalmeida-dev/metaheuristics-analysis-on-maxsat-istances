@@ -53,10 +53,10 @@ def evaluate_particle_fitness(clauses, combination):
         for value in clause:
             var_index = abs(value) - 1 ## normalise for clause list
             ## replace with: "combination[var_index]" if you want to use the continuous vector, this line just turns 0.3 in 0 and 0.7 in 1
-            bool_value = 1 if combination[var_index] > 0.5 else 0
+            is_true = 1 if combination[var_index] > 0.5 else 0
             if value < 0: ## if literal value is below 0, the variable is negated
-                bool_value = not bool_value
-            if bool_value: ## if bool is true
+                is_true = not is_true
+            if is_true: ## if bool is true
                 clause_fitness = 1
                 break
         fitness += clause_fitness
