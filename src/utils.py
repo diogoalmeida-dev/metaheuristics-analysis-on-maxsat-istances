@@ -41,3 +41,23 @@ def read_cnf(filepath=None):
                 break
 
     return clauses, num_clauses, num_vars
+
+
+# Function to find the fitness being the fitness the number of clauses satisfied by the combination
+def evaluate_particle_fitness(clauses, combination):
+    fitness = 0
+
+    for clause in clauses:
+
+        clause_fitness = 0
+        for value in clause:
+            var_index = abs(value) - 1 ## normalise for clause list
+            ## replace with: "combination[var_index]" if you want to use the continuous vector, this line just turns 0.3 in 0 and 0.7 in 1
+            bool_value = 1 if combination[var_index] > 0.5 else 0
+            if value < 0: ## if literal value is below 0, the variable is negated
+                bool_value = not bool_value
+            if bool_value: ## if bool is true
+                clause_fitness = 1
+                break
+        fitness += clause_fitness
+    return fitness
