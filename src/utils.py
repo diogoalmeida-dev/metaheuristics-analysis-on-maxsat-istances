@@ -61,3 +61,11 @@ def evaluate_particle_fitness(clauses, combination):
                 break
         fitness += clause_fitness
     return fitness
+
+def choose_swarm_size(num_vars: int) -> int:
+    if num_vars <= 30:
+        return 30
+    elif num_vars <= 150:
+        return 75
+    else:
+        return 350

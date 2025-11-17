@@ -16,7 +16,7 @@ step 3: find global best fitness
 step 4: for each particle, update velocity
 step 5: for each particle, update position
 step 6: for each particle, update the best personal fitness and the best global fitness
-step 7: for each particle, if the current fitness is a global optimum (satisfies all clauses) early exit
+step 7: for each particle, if the global best fitness is a global optimum (satisfies all clauses) early exit
 step 8: return to step 2
 """
 
@@ -24,30 +24,41 @@ import random
 from particle import *
 from src.utils import evaluate_particle_fitness
 
-def particle_swarm_optimisation(clauses, num_clauses, num_vars, num_particles, iterations):
+def particle_swarm_optimisation(clauses, num_clauses, num_vars, num_particles, max_evaluations):
     swarm = [initialise_particle(clauses,num_vars) for _ in range(num_particles)] ## arr of particles, size = number of particles (arg), step 1 and 2
 
-    global_best_fitness, global_best_position = find_global_best(swarm) ## initialise best_global fitness and position
+    global_best_fitness, global_best_position = find_global_best(swarm) ## initialise best_global fitness and position, step 3
 
-    for _ in range(iterations):
+    evaluations = len(swarm) ## when constructing the swarm every particle had their fitness evaluated
+    patience = 250_000
+    last_improvement = evaluations
+
+    while (evaluations < max_evaluations
+           and global_best_fitness < num_clauses
+           and (evaluations - last_improvement) < patience):
         for particle in swarm:
-            particle.update_velocity(global_best_position) ## step 3
-            particle.update_position()                     ## step 4
+            if evaluations >= max_evaluations or (evaluations - last_improvement) >= patience:
+                break
+
+            particle.update_velocity(global_best_position) ## step 4
+            particle.update_position()                     ## step 5
 
             particle.fitness = evaluate_particle_fitness(clauses, particle.position)
 
+            if particle.fitness > particle.best_fitness:   ## step 6
+                particle.update_best_state()
             if particle.fitness > global_best_fitness:
                 global_best_fitness = particle.fitness   ## update global best fitness
-            if particle.fitness > particle.best_fitness:
-                particle.best_fitness = particle.fitness ## update particle best fitness
+                global_best_position = particle.position.copy()
+                last_improvement = evaluations  # reset ao relógio da estagnação
+                print(last_improvement)
 
-            if global_best_fitness == num_clauses or particle.best_fitness == num_clauses: ## early exit if global optimum found
-                return global_best_fitness
+            evaluations += 1
 
-    print(global_best_fitness)
+    return global_best_fitness, global_best_position, evaluations
 
 
-def particle_swarm_optimisation_with_informants(clauses, num_clauses, num_vars, num_particles, num_informants, iterations):
+def particle_swarm_optimisation_with_informants(clauses, num_clauses, num_vars, num_particles, num_informants, max_evaluations):
     """ [cont.]
     step 5.1: find informants best fitness
     """
@@ -55,24 +66,35 @@ def particle_swarm_optimisation_with_informants(clauses, num_clauses, num_vars, 
 
     global_best_fitness, global_best_position = find_global_best(swarm) ## initialise best_global fitness and position
 
-    for _ in range(iterations):
+    evaluations = len(swarm) ## when constructing the swarm every particle had their fitness evaluated
+    patience = 1000000
+    last_improvement = evaluations
+
+    while (evaluations < max_evaluations
+        and global_best_fitness < num_clauses
+        and (evaluations - last_improvement) < patience):
+
         for particle in swarm:
-                informants_best_fitness = find_informants_best_fitness(swarm, num_informants, particle)
+            if evaluations >= max_evaluations or (evaluations - last_improvement) >= patience:
+                break
 
-                particle.update_velocity_with_informants(global_best_position, informants_best_fitness)  ## step 3
-                particle.update_position()  ## step 4
+            informants_best_position = find_informants_best_position(swarm, num_informants, particle)
+            particle.update_velocity_with_informants(global_best_position, informants_best_position)  ## step 3
+            particle.update_position()  ## step 4
 
-                particle.fitness = evaluate_particle_fitness(clauses, particle.position)
+            particle.fitness = evaluate_particle_fitness(clauses, particle.position)
 
-                if particle.fitness > global_best_fitness:
-                    global_best_fitness = particle.fitness  ## update global best fitness
-                if particle.fitness > particle.best_fitness:
-                    particle.best_fitness = particle.fitness  ## update particle best fitness
+            if particle.fitness > particle.best_fitness:  ## step 6
+                particle.update_best_state()
+            if particle.fitness > global_best_fitness:
+                global_best_fitness = particle.fitness  ## update global best fitness
+                global_best_position = particle.position.copy()
+                last_improvement = evaluations  # reset ao relógio da estagnação
+                print(last_improvement)
 
-                if global_best_fitness == num_clauses or particle.best_fitness == num_clauses:  ## early exit if global optimum found
-                    return global_best_fitness
+            evaluations+=1
 
-    print(global_best_fitness)
+    return global_best_fitness, global_best_position, evaluations
 
 
 
@@ -83,17 +105,12 @@ def initialise_particle(clauses, num_vars):
     p.update_best_state()
     return p
 
-def find_informants_best_fitness(swarm, num_informants, particle):
-    informant_best_fitness = -999
-
+def find_informants_best_position(swarm, num_informants, particle):
     informants = random.sample(swarm, num_informants - 1)
     informants.append(particle)
 
-    for informant in informants:
-        if informant.fitness > informant_best_fitness:
-            informant_best_fitness = informant.fitness
-
-    return informant_best_fitness
+    best_informant = max(informants, key=lambda p: p.best_fitness)
+    return best_informant.best_position.copy()
 
 
 def find_global_best(swarm):
@@ -101,4 +118,3 @@ def find_global_best(swarm):
     best_index = np.argmax([p.fitness for p in swarm])
     global_best_position = swarm[best_index].position.copy()
     return global_best_fitness, global_best_position
-

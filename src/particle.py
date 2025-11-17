@@ -1,11 +1,11 @@
 import numpy as np
 
 # parameters
-max_velocity = 4
-w = 0.7  # inertia weight
-c1 = 1.4 # cognitive coefficient
-c2 = 1.4 # global coefficient
-c3 = 1.4 # social coefficient
+max_velocity = 0.4
+w = 0.72984 # inertia weight
+c1 = 1.496172 # cognitive coefficient
+c2 = 0.75 # global coefficient
+c3 = 1.496172 # social coefficient
 
 class Particle:
     def __init__(self, num_vars):

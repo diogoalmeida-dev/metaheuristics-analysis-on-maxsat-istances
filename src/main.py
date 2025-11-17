@@ -7,9 +7,9 @@ CNF_FILES = {
     "3": "../cnf_files/uf250-01.cnf"
 }
 
-num_particles = 500
-num_informants = 3
-iterations = 5000
+num_informants = 6
+max_evaluations = 1_000_000
+num_particles = 300
 
 def main():
     print("Select CNF file:")
@@ -31,9 +31,13 @@ def main():
     print("2 - PSO with informants")
     x = int(input("Enter choice: (1-2): "))
     if x == 1:
-        particle_swarm_optimisation(clauses, num_clauses, num_vars,num_particles, iterations)
+        fitness, state, evaluations = particle_swarm_optimisation(clauses, num_clauses, num_vars,num_particles, max_evaluations)
+        print(fitness)
+        print(evaluations)
     else:
-        particle_swarm_optimisation_with_informants(clauses, num_clauses, num_vars, num_particles, num_informants, iterations)
+        fitness, state, evaluations = particle_swarm_optimisation_with_informants(clauses, num_clauses, num_vars, num_particles, num_informants, max_evaluations)
+        print(fitness)
+        print(evaluations)
 
 if __name__ == "__main__":
     main()
